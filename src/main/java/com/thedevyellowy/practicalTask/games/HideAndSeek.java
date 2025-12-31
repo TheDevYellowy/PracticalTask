@@ -1,6 +1,8 @@
 package com.thedevyellowy.practicalTask.games;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -32,8 +34,8 @@ public class HideAndSeek extends Game {
     }
 
     @Override
-    void addCommands(LiteralArgumentBuilder<CommandSourceStack> ctx) {
-
+    int runCommand(CommandContext<CommandSourceStack> ctx) {
+        return Command.SINGLE_SUCCESS;
     }
 
     @Override

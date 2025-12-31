@@ -1,6 +1,6 @@
 package com.thedevyellowy.practicalTask.games;
 
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.thedevyellowy.practicalTask.util.Position;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Location;
@@ -10,6 +10,7 @@ import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public abstract class Game implements Listener {
     List<Player> players = new ArrayList<>();
@@ -18,6 +19,8 @@ public abstract class Game implements Listener {
     Position radius;
     boolean started = false;
 
+    String id_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
     public Game(int maxPlayers) {
         this.maxPlayers = maxPlayers;
         this.id = generateId();
@@ -25,12 +28,33 @@ public abstract class Game implements Listener {
 
     abstract void start();
 
-    abstract void addCommands(LiteralArgumentBuilder<CommandSourceStack> commandSource);
+    abstract int runCommand(CommandContext<CommandSourceStack> ctx);
 
     abstract void unregisterEvents();
 
     private String generateId() {
-        return "";
+        /* Use random characters that include [a-z A-Z 0-9]
+        * # of characters and their resulting max game amount
+        * 1  = 36
+        * 2  = 1296
+        * 3  = 46656 <- will probably use this one, we don't need more than 46 thousand games at one time
+        * 4  = 1679616 | million
+        * 5  = 60466176
+        * 6  = 2176782336 | billion
+        * 7  = 78364164096
+        * 8  = 2.8211099e+12 | trillion
+        * 9  = 1.0155996e+14
+        * 10 = 3.6561584e+15 | quintillion
+        */
+
+        Random random = new Random();
+        StringBuilder builder = new StringBuilder();
+        for(int i = 0; i <= 3; i++) {
+            int ranI = random.nextInt(id_chars.length());
+            builder.append(id_chars.charAt(ranI));
+        }
+
+        return builder.toString();
     }
 
     public void setRadius(Vector3d pointOne, Vector3d pointTwo) {

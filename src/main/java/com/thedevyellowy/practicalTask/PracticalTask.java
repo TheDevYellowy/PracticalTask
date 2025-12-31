@@ -5,7 +5,8 @@ import com.thedevyellowy.practicalTask.games.Game;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.Bukkit;
-import org.bukkit.event.EventHandler;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.reflections.Reflections;
@@ -16,11 +17,21 @@ import java.util.Set;
 
 public final class PracticalTask extends JavaPlugin implements Listener { // Minigame plugin
     public List<Game> games = new ArrayList<>();
-    public LiteralArgumentBuilder<CommandSourceStack> commandSource;
 
     @Override
     public void onEnable() {
-        commandSource = Commands.literal("minigames");
+        var root = Commands.literal("minigames");
+        for (Class<? extends Game> gameType : getGameTypes()) {
+            root
+                    .then(Commands.literal(gameType.getName()))
+                    .then(Commands.literal("create"))
+                    .executes(src -> {
+                        Entity executor = src.getSource().getExecutor();
+                        if(!(executor instanceof Player host)) return 1;
+                        // get instanciation of the game type, and add it to the list of "games"
+                        return 1;
+                    });
+        }
     }
 
     @Override
@@ -29,14 +40,12 @@ public final class PracticalTask extends JavaPlugin implements Listener { // Min
     }
 
     // Get all classes that extend the Game class and get the name of the class for future use
-    public List<String> getGameTypes() {
-        List<String> gameTypes = new ArrayList<>();
+    public List<Class<? extends Game>> getGameTypes() {
+        List<Class<? extends Game>> gameTypes = new ArrayList<>();
         Reflections reflections = new Reflections("com.thedevyellowy.practicalTask");
         Set<Class<? extends Game>> types = reflections.getSubTypesOf(Game.class);
 
-        for (Class<? extends Game> type : types) {
-            gameTypes.add(type.getName());
-        }
+        gameTypes.addAll(types);
 
         return gameTypes;
     }
