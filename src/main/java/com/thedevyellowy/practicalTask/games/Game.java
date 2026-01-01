@@ -8,76 +8,121 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.joml.Vector3d;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public abstract class Game implements Listener {
-    List<Player> players = new ArrayList<>();
-    int maxPlayers;
-    String id;
-    Position radius;
-    boolean started = false;
+  List<Player> players = new ArrayList<>();
+  int gracePeriodTime = 0; // Seconds
+  boolean started = false;
+  boolean gracePeriod = true;
+  List<String> commands;
+  Position radius;
+  long startTime;
+  int maxPlayers;
+  int timeLimit; // Minutes
+  Player host;
+  String id;
 
-    String id_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  // Time constants
+  int second = 1000;
+  int minute = 60000;
 
-    public Game(int maxPlayers) {
-        this.maxPlayers = maxPlayers;
-        this.id = generateId();
+  String id_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+  public Game(int maxPlayers) {
+    this.maxPlayers = maxPlayers;
+    this.id = generateId();
+
+    if (this.gracePeriodTime < 1) this.gracePeriod = false;
+  }
+
+  abstract void start();
+
+  abstract String getCreationMessage();
+
+  public abstract int runCommand(String subCommand, CommandContext<CommandSourceStack> ctx);
+
+  public abstract void unregisterEvents();
+
+  public boolean hasCommand(String command) {
+      return commands.contains(command);
+  }
+
+  private String generateId() {
+    /* Use random characters that include [a-z A-Z 0-9]
+     * # of characters and their resulting max game amount ( 36^x )
+     * 1  = 36
+     * 2  = 1296
+     * 3  = 46656 <- will probably use this one, we don't need more than 46 thousand games at one time
+     * 4  = 1679616 | million
+     * 5  = 60466176
+     * 6  = 2176782336 | billion
+     * 7  = 78364164096
+     * 8  = 2.8211099e+12 | trillion
+     * 9  = 1.0155996e+14
+     * 10 = 3.6561584e+15 | quintillion
+     */
+
+    Random random = new Random();
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i <= 3; i++) {
+      int ranI = random.nextInt(id_chars.length());
+      builder.append(id_chars.charAt(ranI));
     }
 
-    abstract void start();
+    return builder.toString();
+  }
 
-    abstract int runCommand(CommandContext<CommandSourceStack> ctx);
+  public String getId() {
+    return this.id;
+  }
 
-    abstract void unregisterEvents();
+  public void setHost(Player host) {
+    this.host = host;
+  }
 
-    private String generateId() {
-        /* Use random characters that include [a-z A-Z 0-9]
-        * # of characters and their resulting max game amount
-        * 1  = 36
-        * 2  = 1296
-        * 3  = 46656 <- will probably use this one, we don't need more than 46 thousand games at one time
-        * 4  = 1679616 | million
-        * 5  = 60466176
-        * 6  = 2176782336 | billion
-        * 7  = 78364164096
-        * 8  = 2.8211099e+12 | trillion
-        * 9  = 1.0155996e+14
-        * 10 = 3.6561584e+15 | quintillion
-        */
+  public Player getHost() {
+    return host;
+  }
 
-        Random random = new Random();
-        StringBuilder builder = new StringBuilder();
-        for(int i = 0; i <= 3; i++) {
-            int ranI = random.nextInt(id_chars.length());
-            builder.append(id_chars.charAt(ranI));
-        }
+  public boolean isHost(Player player) {
+    return this.host.equals(player);
+  }
 
-        return builder.toString();
-    }
+  public void setRadius(Vector3d pointOne, Vector3d pointTwo) {
+    this.radius = new Position(pointOne, pointTwo);
+  }
 
-    public void setRadius(Vector3d pointOne, Vector3d pointTwo) {
-        this.radius = new Position(pointOne, pointTwo);
-    }
+  public List<Player> getPlayers() {
+    return players;
+  }
 
-    public List<Player> getPlayers() {
-        return players;
-    }
+  public boolean addPlayer(Player player) {
+    if (players.size() > maxPlayers) return false;
+    players.add(player);
+    return true;
+  }
 
-    public boolean addPlayer(Player player) {
-        if(players.size() > maxPlayers) return false;
-        players.add(player);
-        return true;
-    }
+  boolean isInsideArea(Player player) {
+    Location location = player.getLocation();
+    double x = location.getX();
+    double y = location.getY();
+    double z = location.getZ();
+    return (radius.x.lower <= x && x >= radius.x.upper)
+      || (radius.y.lower <= y && y >= radius.y.upper)
+      || (radius.z.lower <= z && z >= radius.z.upper);
+  }
 
-    boolean isInsideArea(Player player) {
-        Location location = player.getLocation();
-        double x = location.getX();
-        double y = location.getY();
-        double z = location.getZ();
-        return (radius.x.lower <= x && x >= radius.x.upper)
-                || (radius.y.lower <= y && y >= radius.y.upper)
-                || (radius.z.lower <= z && z >= radius.z.upper);
-    }
+  boolean isInGracePeriod() {
+    if (this.gracePeriodTime == 0) return false;
+    return Instant.now().toEpochMilli() > this.startTime + (long) this.gracePeriodTime * second;
+  }
+
+  @Override
+  public String toString() {
+    return "Game";
+  }
 }

@@ -21,12 +21,22 @@ public class HungerGames extends Game { // Code this after Hide and Seek as a pr
     }
 
     @Override
-    int runCommand(CommandContext<CommandSourceStack> ctx) {
+    String getCreationMessage() {
+        return "";
+    }
+
+    @Override
+    public int runCommand(String subCommand, CommandContext<CommandSourceStack> ctx) {
         return 0;
     }
 
     @Override
-    void unregisterEvents() {
+    public void unregisterEvents() {
 
+    }
+
+    @Override
+    public String toString() {
+        return "Game<HungerGames>";
     }
 }
