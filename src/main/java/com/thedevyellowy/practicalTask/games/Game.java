@@ -4,6 +4,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.thedevyellowy.practicalTask.util.Position;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.joml.Vector3d;
@@ -14,11 +15,11 @@ import java.util.List;
 import java.util.Random;
 
 public abstract class Game implements Listener {
+  List<String> commands = new ArrayList<>();
   List<Player> players = new ArrayList<>();
   int gracePeriodTime = 0; // Seconds
   boolean started = false;
   boolean gracePeriod = true;
-  List<String> commands;
   Position radius;
   long startTime;
   int maxPlayers;
@@ -39,7 +40,7 @@ public abstract class Game implements Listener {
     if (this.gracePeriodTime < 1) this.gracePeriod = false;
   }
 
-  abstract void start();
+  public abstract void start();
 
   abstract String getCreationMessage();
 
@@ -82,7 +83,10 @@ public abstract class Game implements Listener {
 
   public void setHost(Player host) {
     this.host = host;
+    this.host.sendMessage(this.getCreationMessage());
   }
+
+  public boolean started() { return started; }
 
   public Player getHost() {
     return host;
@@ -92,7 +96,7 @@ public abstract class Game implements Listener {
     return this.host.equals(player);
   }
 
-  public void setRadius(Vector3d pointOne, Vector3d pointTwo) {
+  public void setRadius(Location pointOne, Location pointTwo) {
     this.radius = new Position(pointOne, pointTwo);
   }
 
@@ -106,7 +110,7 @@ public abstract class Game implements Listener {
     return true;
   }
 
-  boolean isInsideArea(Player player) {
+  boolean isInsideArea(Entity player) {
     Location location = player.getLocation();
     double x = location.getX();
     double y = location.getY();

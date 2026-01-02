@@ -2,4 +2,4 @@ name: PracticalTask
 version: '0.0.1-development'
 main: com.thedevyellowy.practicalTask.PracticalTask
 load: POSTWORLD
-api-version: '1.21'
+api-version: '1.21.11'
