@@ -53,7 +53,6 @@ public class HGLootTable implements LootTable {
         int ent = random.nextInt(pool.entries.length);
         ExternalLootTable.entries entry = pool.entries[ent];
 
-        PracticalTask.Logger.info(entry.name);
         ItemStack item = ItemStack.of(Material.getMaterial(entry.name.split(":")[1].toUpperCase()));
         Arrays.stream(entry.functions).forEach(function -> {
           if(function.function.equals("minecraft:enchant_with_levels")) {

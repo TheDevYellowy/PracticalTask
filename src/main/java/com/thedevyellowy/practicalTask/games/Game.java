@@ -1,26 +1,29 @@
 package com.thedevyellowy.practicalTask.games;
 
 import com.mojang.brigadier.context.CommandContext;
-import com.thedevyellowy.practicalTask.util.Position;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.joml.Vector3d;
+import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
 public abstract class Game implements Listener {
+  HashMap<Player, Location> returnLocations = new HashMap<>();
   List<String> commands = new ArrayList<>();
   List<Player> players = new ArrayList<>();
   int gracePeriodTime = 0; // Seconds
   boolean started = false;
   boolean gracePeriod = true;
-  Position radius;
+  BoundingBox radius;
   long startTime;
   int maxPlayers;
   int timeLimit; // Minutes
@@ -81,8 +84,9 @@ public abstract class Game implements Listener {
     return this.id;
   }
 
-  public void setHost(Player host) {
+  public void setHost(@NotNull Player host) {
     this.host = host;
+    this.players.add(host);
     this.host.sendMessage(this.getCreationMessage());
   }
 
@@ -97,7 +101,7 @@ public abstract class Game implements Listener {
   }
 
   public void setRadius(Location pointOne, Location pointTwo) {
-    this.radius = new Position(pointOne, pointTwo);
+    this.radius = new BoundingBox(pointOne.blockX(), pointOne.blockY(), pointOne.blockZ(), pointTwo.blockX(), pointTwo.blockY(), pointTwo.blockZ());
   }
 
   public List<Player> getPlayers() {
@@ -110,19 +114,21 @@ public abstract class Game implements Listener {
     return true;
   }
 
-  boolean isInsideArea(Entity player) {
-    Location location = player.getLocation();
-    double x = location.getX();
-    double y = location.getY();
-    double z = location.getZ();
-    return (radius.x.lower <= x && x >= radius.x.upper)
-      || (radius.y.lower <= y && y >= radius.y.upper)
-      || (radius.z.lower <= z && z >= radius.z.upper);
+  boolean notInsideArea(Entity player) {
+    return !this.radius.contains(player.getBoundingBox());
+  }
+
+  boolean notInsideArea(Location position) {
+    return !this.radius.contains(position.toVector());
   }
 
   boolean isInGracePeriod() {
     if (this.gracePeriodTime == 0) return false;
-    return Instant.now().toEpochMilli() > this.startTime + (long) this.gracePeriodTime * second;
+    return Instant.now().toEpochMilli() <= this.startTime + ((long) this.gracePeriodTime * second);
+  }
+
+  double clamp(double value, double min, double max) {
+    return Math.max(min, Math.min(max, value));
   }
 
   @Override
